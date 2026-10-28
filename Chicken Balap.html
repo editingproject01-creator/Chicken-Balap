@@ -1,0 +1,947 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>Chicken Balap</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐔</text></svg>"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap");
+
+      body {
+        font-family: "Press Start 2P", cursive, sans-serif;
+        user-select: none;
+        -webkit-user-select: none;
+        touch-action: manipulation;
+      }
+
+      .pixel-corners {
+        clip-path: polygon(
+          0 4px,
+          4px 4px,
+          4px 0,
+          calc(100% - 4px) 0,
+          calc(100% - 4px) 4px,
+          100% 4px,
+          100% calc(100% - 4px),
+          calc(100% - 4px) calc(100% - 4px),
+          calc(100% - 4px) 100%,
+          4px 100%,
+          4px calc(100% - 4px),
+          0 calc(100% - 4px)
+        );
+      }
+    </style>
+  </head>
+  <body
+    class="bg-slate-900 text-white min-h-screen flex flex-col items-center justify-center p-2 sm:p-4 overflow-hidden select-none"
+  >
+    <!-- Main Container -->
+    <div class="w-full max-w-3xl flex flex-col items-center">
+      <!-- Header / Title -->
+      <div
+        class="w-full flex justify-between items-center mb-3 px-2 text-xs sm:text-sm"
+      >
+        <div class="flex items-center gap-2 text-amber-400">
+          <span class="text-xl">🐔</span>
+          <span class="tracking-wider">CHICKEN BALAP</span>
+        </div>
+        <div class="text-slate-400">
+          REKOR: <span id="highScoreText" class="text-amber-300">00000</span>
+        </div>
+      </div>
+
+      <!-- Canvas Container -->
+      <div
+        class="relative w-full bg-sky-200 rounded-xl overflow-hidden border-4 border-slate-700 shadow-2xl aspect-[2/1] max-h-[70vh]"
+      >
+        <!-- Canvas Element -->
+        <canvas id="gameCanvas" class="w-full h-full block"></canvas>
+
+        <!-- Overlay UI (Start / Game Over) -->
+        <div
+          id="overlay"
+          class="absolute inset-0 bg-slate-900/80 backdrop-blur-sm flex flex-col items-center justify-center p-4 transition-all duration-300"
+        >
+          <div
+            id="overlayContent"
+            class="text-center flex flex-col items-center gap-4"
+          >
+            <div
+              id="gameTitle"
+              class="text-2xl sm:text-4xl font-bold text-amber-400 drop-shadow-[0_4px_0_rgba(0,0,0,0.8)] tracking-wider"
+            >
+              CHICKEN BALAP!
+            </div>
+            <p
+              id="gameSubText"
+              class="text-xs sm:text-sm text-slate-300 max-w-md leading-relaxed"
+            >
+              Bantu Si Ayam agar tidak masuk wajan penggorengan !
+            </p>
+
+            <button
+              id="startBtn"
+              class="mt-2 px-6 py-3 bg-amber-500 hover:bg-amber-400 active:translate-y-1 text-slate-950 font-bold text-sm sm:text-base rounded-lg border-b-4 border-amber-700 transition-all cursor-pointer shadow-lg flex items-center gap-2"
+            >
+              <span>Gasken</span>
+            </button>
+
+            <div
+              class="text-[10px] sm:text-xs text-slate-400 mt-2 flex flex-wrap justify-center gap-3"
+            >
+              <span
+                class="bg-slate-800 px-2 py-1 rounded border border-slate-700"
+                >Space / Panah Atas = Lompat</span
+              >
+              <span
+                class="bg-slate-800 px-2 py-1 rounded border border-slate-700"
+                >Panah Bawah = Menunduk</span
+              >
+              <span
+                class="bg-slate-800 px-2 py-1 rounded border border-slate-700 sm:hidden"
+                >Tap Layar = Lompat</span
+              >
+            </div>
+          </div>
+        </div>
+
+        <!-- Live Score Badge in Canvas -->
+        <div
+          class="absolute top-3 right-4 bg-slate-900/60 backdrop-blur-md px-3 py-1.5 rounded-lg border border-slate-700 text-xs sm:text-sm font-mono text-emerald-400 font-bold tracking-widest shadow"
+        >
+          SCORE: <span id="scoreText">00000</span>
+        </div>
+      </div>
+
+      <!-- Touch Control Helper -->
+      <div class="w-full grid grid-cols-2 gap-3 mt-3 sm:hidden">
+        <button
+          id="mobileDuckBtn"
+          class="py-3 bg-slate-800 border border-slate-700 rounded-lg text-xs font-bold text-slate-300 active:bg-slate-700 flex items-center justify-center gap-1"
+        >
+          👇 MENUNDUK
+        </button>
+        <button
+          id="mobileJumpBtn"
+          class="py-3 bg-amber-600 border border-amber-500 rounded-lg text-xs font-bold text-white active:bg-amber-500 flex items-center justify-center gap-1"
+        >
+          🚀 LOMPAT
+        </button>
+      </div>
+      <!-- Footer -->
+      <div
+        class="w-full mt-8 mb-2 text-center text-[10px] sm:text-xs text-slate-500 font-sans tracking-wide"
+      >
+        &copy; 2026 Luqman ID. Semua hak dilindungi undang-undang
+      </div>
+    </div>
+
+    <script>
+      // Audio Synthesizer via Web Audio API (No external sound files required)
+      class SoundFX {
+        constructor() {
+          this.ctx = null;
+        }
+
+        init() {
+          if (!this.ctx) {
+            this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+          }
+        }
+
+        playJump() {
+          if (!this.ctx) return;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+
+          osc.type = "sine";
+          osc.frequency.setValueAtTime(150, this.ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(
+            400,
+            this.ctx.currentTime + 0.15,
+          );
+
+          gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+          gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.15);
+
+          osc.start();
+          osc.stop(this.ctx.currentTime + 0.15);
+        }
+
+        playScore() {
+          if (!this.ctx) return;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+
+          osc.type = "square";
+          osc.frequency.setValueAtTime(600, this.ctx.currentTime);
+          osc.frequency.setValueAtTime(800, this.ctx.currentTime + 0.08);
+
+          gain.gain.setValueAtTime(0.1, this.ctx.currentTime);
+          gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.16);
+
+          osc.start();
+          osc.stop(this.ctx.currentTime + 0.16);
+        }
+
+        playHit() {
+          if (!this.ctx) return;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+
+          osc.type = "sawtooth";
+          osc.frequency.setValueAtTime(120, this.ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(
+            30,
+            this.ctx.currentTime + 0.3,
+          );
+
+          gain.gain.setValueAtTime(0.4, this.ctx.currentTime);
+          gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.3);
+
+          osc.start();
+          osc.stop(this.ctx.currentTime + 0.3);
+        }
+      }
+
+      const sound = new SoundFX();
+
+      // Canvas Setup
+      const canvas = document.getElementById("gameCanvas");
+      const ctx = canvas.getContext("2d");
+
+      // UI Elements
+      const overlay = document.getElementById("overlay");
+      const gameTitle = document.getElementById("gameTitle");
+      const gameSubText = document.getElementById("gameSubText");
+      const startBtn = document.getElementById("startBtn");
+      const scoreText = document.getElementById("scoreText");
+      const highScoreText = document.getElementById("highScoreText");
+      const mobileJumpBtn = document.getElementById("mobileJumpBtn");
+      const mobileDuckBtn = document.getElementById("mobileDuckBtn");
+
+      // Canvas Resolution Dynamic Resizing
+      const CANVAS_WIDTH = 800;
+      const CANVAS_HEIGHT = 400;
+      canvas.width = CANVAS_WIDTH;
+      canvas.height = CANVAS_HEIGHT;
+
+      // Game Variables
+      let gameRunning = false;
+      let score = 0;
+      let highScore = parseInt(
+        localStorage.getItem("chicken_runner_hi") || "0",
+      );
+      let gameSpeed = 6;
+      let frameCount = 0;
+      let animationFrameId = null;
+
+      // HighScore UI Initialization
+      highScoreText.textContent = String(highScore).padStart(5, "0");
+
+      // Ground position
+      const GROUND_Y = 320;
+
+      // Chicken Player Object
+      const chicken = {
+        x: 80,
+        y: GROUND_Y - 45,
+        width: 42,
+        height: 45,
+        normalHeight: 45,
+        duckHeight: 25,
+        vy: 0,
+        gravity: 0.7,
+        jumpForce: -13.5,
+        isGrounded: true,
+        isDucking: false,
+        wingAnimFrame: 0,
+
+        reset() {
+          this.y = GROUND_Y - this.normalHeight;
+          this.height = this.normalHeight;
+          this.vy = 0;
+          this.isGrounded = true;
+          this.isDucking = false;
+        },
+
+        jump() {
+          if (this.isGrounded && !this.isDucking) {
+            this.vy = this.jumpForce;
+            this.isGrounded = false;
+            sound.playJump();
+          }
+        },
+
+        duck(ducking) {
+          if (this.isGrounded) {
+            this.isDucking = ducking;
+            if (ducking) {
+              this.height = this.duckHeight;
+              this.y = GROUND_Y - this.duckHeight;
+            } else {
+              this.height = this.normalHeight;
+              this.y = GROUND_Y - this.normalHeight;
+            }
+          }
+        },
+
+        update() {
+          // Physics
+          this.vy += this.gravity;
+          this.y += this.vy;
+
+          // Ground Collision
+          const currentGroundY = GROUND_Y - this.height;
+          if (this.y >= currentGroundY) {
+            this.y = currentGroundY;
+            this.vy = 0;
+            this.isGrounded = true;
+          }
+
+          // Wing Animation Counter
+          if (frameCount % 6 === 0) {
+            this.wingAnimFrame = (this.wingAnimFrame + 1) % 4;
+          }
+        },
+
+        draw(ctx) {
+          ctx.save();
+          ctx.translate(this.x, this.y);
+
+          if (this.isDucking) {
+            // --- DUCKING CHICKEN SPRITE ---
+            // Body
+            ctx.fillStyle = "#facc15"; // Yellow
+            ctx.beginPath();
+            ctx.ellipse(22, 14, 22, 11, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Comb (Jengger)
+            ctx.fillStyle = "#ef4444";
+            ctx.fillRect(36, 2, 6, 6);
+
+            // Beak (Paruh)
+            ctx.fillStyle = "#f97316";
+            ctx.beginPath();
+            ctx.moveTo(40, 10);
+            ctx.lineTo(48, 14);
+            ctx.lineTo(40, 17);
+            ctx.fill();
+
+            // Eye
+            ctx.fillStyle = "#000";
+            ctx.beginPath();
+            ctx.arc(35, 9, 2.5, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Wing
+            ctx.fillStyle = "#eab308";
+            ctx.beginPath();
+            ctx.ellipse(16, 14, 10, 5, -0.2, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Feet
+            ctx.strokeStyle = "#f97316";
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(10, 22);
+            ctx.lineTo(6, 25);
+            ctx.moveTo(25, 22);
+            ctx.lineTo(21, 25);
+            ctx.stroke();
+          } else {
+            // --- STANDING / JUMPING CHICKEN SPRITE ---
+            // Feet (Running animation)
+            ctx.strokeStyle = "#f97316";
+            ctx.lineWidth = 3.5;
+            const legOffset = this.isGrounded
+              ? Math.sin(frameCount * 0.3) * 8
+              : 0;
+
+            ctx.beginPath();
+            ctx.moveTo(16, 38);
+            ctx.lineTo(16 - legOffset, 45);
+            ctx.lineTo(22 - legOffset, 45);
+            ctx.moveTo(28, 38);
+            ctx.lineTo(28 + legOffset, 45);
+            ctx.lineTo(34 + legOffset, 45);
+            ctx.stroke();
+
+            // Tail Feathers
+            ctx.fillStyle = "#eab308";
+            ctx.beginPath();
+            ctx.moveTo(2, 20);
+            ctx.lineTo(-8, 12);
+            ctx.lineTo(4, 26);
+            ctx.moveTo(2, 22);
+            ctx.lineTo(-10, 20);
+            ctx.lineTo(4, 28);
+            ctx.fill();
+
+            // Body
+            ctx.fillStyle = "#facc15"; // Yellow
+            ctx.beginPath();
+            ctx.ellipse(20, 24, 16, 15, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Head
+            ctx.beginPath();
+            ctx.arc(28, 13, 11, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Comb (Jengger Ayam)
+            ctx.fillStyle = "#ef4444";
+            ctx.beginPath();
+            ctx.arc(25, 2, 4, 0, Math.PI * 2);
+            ctx.arc(29, 0, 4.5, 0, Math.PI * 2);
+            ctx.arc(33, 2, 4, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Wattle (Gelambir Merah)
+            ctx.beginPath();
+            ctx.arc(36, 20, 3.5, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Beak (Paruh)
+            ctx.fillStyle = "#f97316";
+            ctx.beginPath();
+            ctx.moveTo(36, 12);
+            ctx.lineTo(45, 16);
+            ctx.lineTo(36, 19);
+            ctx.fill();
+
+            // Eye
+            ctx.fillStyle = "#000000";
+            ctx.beginPath();
+            ctx.arc(31, 10, 2.5, 0, Math.PI * 2);
+            ctx.fill();
+            // Eye Glint
+            ctx.fillStyle = "#ffffff";
+            ctx.beginPath();
+            ctx.arc(32, 9, 1, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Wing (Flapping Animation)
+            ctx.fillStyle = "#eab308";
+            ctx.save();
+            ctx.translate(16, 22);
+            const wingAngle = this.isGrounded
+              ? Math.sin(frameCount * 0.4) * 0.2
+              : Math.sin(frameCount * 0.8) * 0.6 - 0.3;
+            ctx.rotate(wingAngle);
+            ctx.beginPath();
+            ctx.ellipse(0, 0, 10, 6, 0.2, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+          }
+
+          ctx.restore();
+        },
+      };
+
+      // Obstacles System
+      let obstacles = [];
+
+      class Obstacle {
+        constructor(type) {
+          this.type = type; // 'cactus', 'egg', 'bird'
+          this.x = CANVAS_WIDTH + 50;
+
+          if (type === "cactus") {
+            this.width = 28;
+            this.height = 50;
+            this.y = GROUND_Y - this.height;
+          } else if (type === "egg") {
+            this.width = 30;
+            this.height = 36;
+            this.y = GROUND_Y - this.height;
+          } else if (type === "bird") {
+            this.width = 44;
+            this.height = 32;
+            // Flying bird height (Low requires ducking, High requires stay ground or jump)
+            this.y = Math.random() > 0.5 ? GROUND_Y - 75 : GROUND_Y - 42;
+            this.animFrame = 0;
+          }
+        }
+
+        update() {
+          this.x -= gameSpeed;
+        }
+
+        draw(ctx) {
+          ctx.save();
+          ctx.translate(this.x, this.y);
+
+          if (this.type === "cactus") {
+            // Triple/Single Cactus
+            ctx.fillStyle = "#15803d";
+            // Main Stem
+            ctx.fillRect(10, 0, 10, 50);
+            // Left Branch
+            ctx.fillRect(2, 15, 10, 6);
+            ctx.fillRect(2, 10, 5, 10);
+            // Right Branch
+            ctx.fillRect(18, 22, 8, 6);
+            ctx.fillRect(21, 14, 5, 12);
+            // Details
+            ctx.fillStyle = "#166534";
+            ctx.fillRect(12, 0, 3, 50);
+          } else if (this.type === "egg") {
+            // Hay Stack / Nest with Egg
+            ctx.fillStyle = "#d97706";
+            ctx.beginPath();
+            ctx.ellipse(15, 28, 18, 8, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Spotted Egg
+            ctx.fillStyle = "#f8fafc";
+            ctx.beginPath();
+            ctx.ellipse(15, 18, 11, 15, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Spots
+            ctx.fillStyle = "#cbd5e1";
+            ctx.beginPath();
+            ctx.arc(11, 14, 2.5, 0, Math.PI * 2);
+            ctx.arc(18, 22, 3, 0, Math.PI * 2);
+            ctx.arc(13, 25, 2, 0, Math.PI * 2);
+            ctx.fill();
+          } else if (this.type === "bird") {
+            // Pterodactyl / Eagle Bird
+            const flap = Math.sin(frameCount * 0.3) > 0;
+
+            // Bird Body
+            ctx.fillStyle = "#475569";
+            ctx.beginPath();
+            ctx.ellipse(20, 16, 16, 8, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Head & Beak
+            ctx.fillRect(32, 10, 8, 7);
+            ctx.fillStyle = "#ef4444";
+            ctx.beginPath();
+            ctx.moveTo(40, 10);
+            ctx.lineTo(48, 14);
+            ctx.lineTo(40, 17);
+            ctx.fill();
+
+            // Wings
+            ctx.fillStyle = "#334155";
+            ctx.beginPath();
+            if (flap) {
+              ctx.moveTo(15, 16);
+              ctx.lineTo(25, -6);
+              ctx.lineTo(28, 16);
+            } else {
+              ctx.moveTo(15, 16);
+              ctx.lineTo(25, 32);
+              ctx.lineTo(28, 16);
+            }
+            ctx.fill();
+          }
+
+          ctx.restore();
+        }
+      }
+
+      // Clouds Background System
+      let clouds = [];
+      function manageClouds() {
+        if (frameCount % 120 === 0 && Math.random() > 0.3) {
+          clouds.push({
+            x: CANVAS_WIDTH + 60,
+            y: Math.random() * 120 + 20,
+            speed: Math.random() * 0.8 + 0.5,
+            scale: Math.random() * 0.5 + 0.7,
+          });
+        }
+
+        clouds.forEach((cloud, index) => {
+          cloud.x -= cloud.speed;
+
+          // Draw Cloud
+          ctx.fillStyle = "rgba(255, 255, 255, 0.85)";
+          ctx.beginPath();
+          ctx.arc(cloud.x, cloud.y, 18 * cloud.scale, 0, Math.PI * 2);
+          ctx.arc(
+            cloud.x + 15 * cloud.scale,
+            cloud.y - 10 * cloud.scale,
+            22 * cloud.scale,
+            0,
+            Math.PI * 2,
+          );
+          ctx.arc(
+            cloud.x + 35 * cloud.scale,
+            cloud.y,
+            18 * cloud.scale,
+            0,
+            Math.PI * 2,
+          );
+          ctx.fill();
+
+          if (cloud.x < -100) clouds.splice(index, 1);
+        });
+      }
+
+      // Spawn Obstacle Logic
+      let obstacleTimer = 0;
+      let minObstacleInterval = 80;
+
+      function manageObstacles() {
+        obstacleTimer++;
+
+        if (obstacleTimer > minObstacleInterval) {
+          if (Math.random() < 0.6) {
+            const types = ["cactus", "egg", "bird"];
+            // Only spawn bird if score > 150
+            const availableTypes = score > 150 ? types : ["cactus", "egg"];
+            const selectedType =
+              availableTypes[Math.floor(Math.random() * availableTypes.length)];
+
+            obstacles.push(new Obstacle(selectedType));
+            obstacleTimer = 0;
+            // Randomize next interval
+            minObstacleInterval =
+              Math.floor(Math.random() * 40) +
+              Math.max(45, 90 - Math.floor(score / 100));
+          }
+        }
+
+        for (let i = obstacles.length - 1; i >= 0; i--) {
+          const obs = obstacles[i];
+          obs.update();
+          obs.draw(ctx);
+
+          // AABB Collision Detection
+          if (checkCollision(chicken, obs)) {
+            handleGameOver();
+          }
+
+          // Remove Offscreen & Increase Score
+          if (obs.x + obs.width < 0) {
+            obstacles.splice(i, 1);
+          }
+        }
+      }
+
+      // Collision Helper (With slight padding forgiveness for fair gameplay)
+      function checkCollision(rect1, rect2) {
+        const padding = 6;
+        return (
+          rect1.x + padding < rect2.x + rect2.width &&
+          rect1.x + rect1.width - padding > rect2.x &&
+          rect1.y + padding < rect2.y + rect2.height &&
+          rect1.y + rect1.height - padding > rect2.y
+        );
+      }
+
+      // Helper function untuk transisi warna (Linear Interpolation)
+      // Fungsi ini mengubah dua warna hex menjadi angka RGB, lalu mencari warna tengahnya berdasarkan faktor progress
+      function lerpColor(color1, color2, factor) {
+        let c1 = parseInt(color1.substring(1), 16);
+        let c2 = parseInt(color2.substring(1), 16);
+        let r1 = (c1 >> 16) & 255,
+          g1 = (c1 >> 8) & 255,
+          b1 = c1 & 255;
+        let r2 = (c2 >> 16) & 255,
+          g2 = (c2 >> 8) & 255,
+          b2 = c2 & 255;
+        let r = Math.round(r1 + factor * (r2 - r1));
+        let g = Math.round(g1 + factor * (g2 - g1));
+        let b = Math.round(b1 + factor * (b2 - b1));
+        return (
+          "#" + ((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1)
+        );
+      }
+
+      // Environment Scenery (Ground, Sun/Moon, Grass)
+      let groundOffset = 0;
+      function drawEnvironment() {
+        // Kalkulasi Waktu & Fase (Asumsi 60 FPS)
+        // 20 detik = 1200 frame. Total 4 fase = 4800 frame per siklus penuh
+        const framesPerPhase = 1200;
+        const totalPhases = 4;
+        const totalCycleFrames = framesPerPhase * totalPhases;
+
+        const currentCycleFrame = frameCount % totalCycleFrames;
+        const currentPhase = Math.floor(currentCycleFrame / framesPerPhase);
+
+        // Progress dari 0.0 hingga 1.0 di dalam fase yang sedang berjalan
+        const progress = (currentCycleFrame % framesPerPhase) / framesPerPhase;
+
+        // Palet warna diperbarui: menambahkan warna tanah, rumput, dan detail rumput
+        const phases = [
+          {
+            // 0: Pagi
+            top: "#bae6fd",
+            bottom: "#f0f9ff",
+            celestial1: "#fde047",
+            celestial2: "#fef08a",
+            dirt: "#854d0e",
+            grass: "#22c55e",
+            detail: "#16a34a",
+          },
+          {
+            // 1: Siang
+            top: "#38bdf8",
+            bottom: "#bae6fd",
+            celestial1: "#fef08a",
+            celestial2: "#fef9c3",
+            dirt: "#854d0e",
+            grass: "#22c55e",
+            detail: "#16a34a",
+          },
+          {
+            // 2: Sore
+            top: "#f97316",
+            bottom: "#fde047",
+            celestial1: "#ea580c",
+            celestial2: "#fdba74",
+            dirt: "#713f12",
+            grass: "#16a34a",
+            detail: "#15803d",
+          },
+          {
+            // 3: Malam
+            top: "#0f172a",
+            bottom: "#1e293b",
+            celestial1: "#e2e8f0",
+            celestial2: "#f8fafc",
+            dirt: "#422006",
+            grass: "#14532d",
+            detail: "#166534",
+          },
+        ];
+
+        // Tentukan warna fase sekarang dan fase berikutnya untuk ditransisikan
+        const current = phases[currentPhase];
+        const next = phases[(currentPhase + 1) % totalPhases];
+
+        // Transisi warna dengan lerpColor untuk langit dan tanah
+        const currentTopColor = lerpColor(current.top, next.top, progress);
+        const currentBottomColor = lerpColor(
+          current.bottom,
+          next.bottom,
+          progress,
+        );
+        const currentCelestial1 = lerpColor(
+          current.celestial1,
+          next.celestial1,
+          progress,
+        );
+        const currentCelestial2 = lerpColor(
+          current.celestial2,
+          next.celestial2,
+          progress,
+        );
+
+        const currentDirt = lerpColor(current.dirt, next.dirt, progress);
+        const currentGrass = lerpColor(current.grass, next.grass, progress);
+        const currentDetail = lerpColor(current.detail, next.detail, progress);
+
+        // --- 1. Menggambar Langit (Sky Gradient) ---
+        const skyGradient = ctx.createLinearGradient(0, 0, 0, GROUND_Y);
+        skyGradient.addColorStop(0, currentTopColor);
+        skyGradient.addColorStop(1, currentBottomColor);
+        ctx.fillStyle = skyGradient;
+        ctx.fillRect(0, 0, CANVAS_WIDTH, GROUND_Y);
+
+        // --- 2. Menggambar Benda Langit (Matahari / Bulan) ---
+        // Animasi posisi Y agar terbit dan tenggelam secara smooth
+        let celestialY = 60;
+        if (currentPhase === 0) {
+          celestialY = 60 + (1 - progress) * 80; // Pagi: Matahari Terbit (Y: 140 -> 60)
+        } else if (currentPhase === 1) {
+          celestialY = 60; // Siang: Matahari di atas (Y: 60)
+        } else if (currentPhase === 2) {
+          celestialY = 60 + progress * 80; // Sore: Matahari Tenggelam (Y: 60 -> 140)
+        } else if (currentPhase === 3) {
+          // Malam: Bulan terbit di paruh pertama, tenggelam di paruh kedua agar posisinya menyambung dengan Pagi
+          if (progress < 0.5) {
+            celestialY = 60 + (1 - progress * 2) * 80; // Y: 140 -> 60
+          } else {
+            celestialY = 60 + (progress - 0.5) * 2 * 80; // Y: 60 -> 140
+          }
+        }
+
+        ctx.fillStyle = currentCelestial1;
+        ctx.beginPath();
+        ctx.arc(700, celestialY, 30, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = currentCelestial2;
+        ctx.beginPath();
+        ctx.arc(700, celestialY, 38, 0, Math.PI * 2);
+        ctx.fill();
+
+        // --- 3. Menggambar Tanah (Ground & Grass) ---
+        ctx.fillStyle = currentDirt;
+        ctx.fillRect(0, GROUND_Y, CANVAS_WIDTH, CANVAS_HEIGHT - GROUND_Y);
+
+        ctx.fillStyle = currentGrass;
+        ctx.fillRect(0, GROUND_Y, CANVAS_WIDTH, 10);
+
+        // Animasi pergerakan detail tanah
+        groundOffset = (groundOffset + gameSpeed) % 40;
+        ctx.fillStyle = currentDetail;
+        for (let x = -groundOffset; x < CANVAS_WIDTH; x += 40) {
+          ctx.fillRect(x, GROUND_Y - 4, 12, 4);
+          ctx.fillRect(x + 20, GROUND_Y + 12, 6, 3);
+        }
+      }
+
+      // Main Game Loop
+      function gameLoop() {
+        if (!gameRunning) return;
+
+        frameCount++;
+        ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+        // Render World
+        drawEnvironment();
+        manageClouds();
+
+        // Update & Render Chicken
+        chicken.update();
+        chicken.draw(ctx);
+
+        // Update & Render Obstacles
+        manageObstacles();
+
+        // Update Score & Speed
+        score += 0.15;
+        const currentScoreInt = Math.floor(score);
+        scoreText.textContent = String(currentScoreInt).padStart(5, "0");
+
+        // Milestone Sound Every 100 Score
+        if (
+          currentScoreInt > 0 &&
+          currentScoreInt % 100 === 0 &&
+          Math.floor(score - 0.15) % 100 !== 0
+        ) {
+          sound.playScore();
+        }
+
+        // Gradual Speed Increase
+        if (frameCount % 300 === 0 && gameSpeed < 14) {
+          gameSpeed += 0.4;
+        }
+
+        animationFrameId = requestAnimationFrame(gameLoop);
+      }
+
+      // Start / Restart Game
+      function startGame() {
+        sound.init();
+        gameRunning = true;
+        score = 0;
+        gameSpeed = 6;
+        frameCount = 0;
+        obstacleTimer = 0;
+        obstacles = [];
+        clouds = [];
+        chicken.reset();
+
+        overlay.classList.add("hidden");
+        if (animationFrameId) cancelAnimationFrame(animationFrameId);
+        gameLoop();
+      }
+
+      // Game Over Handler
+      function handleGameOver() {
+        gameRunning = false;
+        sound.playHit();
+
+        const finalScore = Math.floor(score);
+        if (finalScore > highScore) {
+          highScore = finalScore;
+          localStorage.setItem("chicken_runner_hi", highScore);
+          highScoreText.textContent = String(highScore).padStart(5, "0");
+        }
+
+        // Show Game Over Overlay
+        gameTitle.textContent = "MATI YA?";
+        gameTitle.className =
+          "text-2xl sm:text-4xl font-bold text-red-500 drop-shadow-[0_4px_0_rgba(0,0,0,0.8)] tracking-wider";
+        gameSubText.innerHTML = `Skor Kamu: <span class="text-amber-300 font-bold">${finalScore}</span>`;
+        startBtn.innerHTML = `<span>Gas Lagi</span>`;
+        overlay.classList.remove("hidden");
+      }
+
+      // Event Listeners for Controls
+      function handleKeyDown(e) {
+        if (e.code === "Space" || e.code === "ArrowUp") {
+          e.preventDefault();
+          if (!gameRunning) {
+            startGame();
+          } else {
+            chicken.jump();
+          }
+        } else if (e.code === "ArrowDown") {
+          e.preventDefault();
+          if (gameRunning) chicken.duck(true);
+        }
+      }
+
+      function handleKeyUp(e) {
+        if (e.code === "ArrowDown") {
+          if (gameRunning) chicken.duck(false);
+        }
+      }
+
+      // Touch Controls
+      canvas.addEventListener(
+        "touchstart",
+        (e) => {
+          e.preventDefault();
+          if (!gameRunning) {
+            startGame();
+          } else {
+            chicken.jump();
+          }
+        },
+        { passive: false },
+      );
+
+      mobileJumpBtn.addEventListener("touchstart", (e) => {
+        e.preventDefault();
+        if (gameRunning) chicken.jump();
+      });
+
+      mobileDuckBtn.addEventListener("touchstart", (e) => {
+        e.preventDefault();
+        if (gameRunning) chicken.duck(true);
+      });
+
+      mobileDuckBtn.addEventListener("touchend", (e) => {
+        e.preventDefault();
+        if (gameRunning) chicken.duck(false);
+      });
+
+      // Keyboard Listeners
+      window.addEventListener("keydown", handleKeyDown);
+      window.addEventListener("keyup", handleKeyUp);
+      startBtn.addEventListener("click", startGame);
+
+      // Initial Static Render
+      drawEnvironment();
+      chicken.draw(ctx);
+
+      // Tambahin local storage
+    </script>
+  </body>
+</html>
