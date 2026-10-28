@@ -19,95 +19,106 @@
         font-family: "Press Start 2P", cursive, sans-serif;
         user-select: none;
         -webkit-user-select: none;
-        touch-action: manipulation;
+        touch-action: manipulation; /* Mencegah zoom saat double tap */
       }
 
-      .pixel-corners {
-        clip-path: polygon(
-          0 4px,
-          4px 4px,
-          4px 0,
-          calc(100% - 4px) 0,
-          calc(100% - 4px) 4px,
-          100% 4px,
-          100% calc(100% - 4px),
-          calc(100% - 4px) calc(100% - 4px),
-          calc(100% - 4px) 100%,
-          4px 100%,
-          4px calc(100% - 4px),
-          0 calc(100% - 4px)
-        );
+      /* Sembunyikan kontrol sentuh hanya di perangkat yang menggunakan mouse (PC/Laptop) */
+      @media (hover: hover) and (pointer: fine) {
+        .touch-controls {
+          display: none !important;
+        }
+      }
+
+      /* Animasi pop-in untuk overlay */
+      @keyframes popIn {
+        0% {
+          transform: scale(0.9);
+          opacity: 0;
+        }
+        100% {
+          transform: scale(1);
+          opacity: 1;
+        }
+      }
+
+      .pop-in {
+        animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
       }
     </style>
   </head>
+  <!-- h-[100dvh] memastikan layout pas dengan layar HP termasuk address bar -->
   <body
-    class="bg-slate-900 text-white min-h-screen flex flex-col items-center justify-center p-2 sm:p-4 overflow-hidden select-none"
+    class="bg-slate-900 text-white h-[100dvh] w-full flex flex-col items-center justify-center p-2 sm:p-4 overflow-hidden select-none"
   >
-    <!-- Main Container -->
-    <div class="w-full max-w-3xl flex flex-col items-center">
+    <!-- Main Container: Flexbox untuk mengisi tinggi layar -->
+    <div
+      class="w-full max-w-4xl h-full flex flex-col items-center justify-between gap-3"
+    >
       <!-- Header / Title -->
       <div
-        class="w-full flex justify-between items-center mb-3 px-2 text-xs sm:text-sm"
+        class="w-full flex justify-between items-center px-2 shrink-0 pt-2 text-[10px] sm:text-sm"
       >
         <div class="flex items-center gap-2 text-amber-400">
-          <span class="text-xl">🐔</span>
-          <span class="tracking-wider">CHICKEN BALAP</span>
+          <span class="text-2xl">🐔</span>
+          <span class="tracking-widest font-bold">CHICKEN BALAP</span>
         </div>
-        <div class="text-slate-400">
-          REKOR: <span id="highScoreText" class="text-amber-300">00000</span>
+        <div class="text-slate-400 flex flex-col items-end">
+          <span>REKOR</span>
+          <span id="highScoreText" class="text-amber-300 text-sm sm:text-base"
+            >00000</span
+          >
         </div>
       </div>
 
-      <!-- Canvas Container -->
+      <!-- Canvas Container: Menggunakan sisa ruang (flex-1) dan mencegah meluap -->
       <div
-        class="relative w-full bg-sky-200 rounded-xl overflow-hidden border-4 border-slate-700 shadow-2xl aspect-[2/1] max-h-[70vh]"
+        class="relative w-full flex-1 min-h-0 bg-sky-200 rounded-2xl overflow-hidden border-[6px] border-slate-700 shadow-2xl flex justify-center items-center"
       >
-        <!-- Canvas Element -->
-        <canvas id="gameCanvas" class="w-full h-full block"></canvas>
+        <!-- Canvas Element: object-contain memastikan kanvas tidak gepeng dan pas di dalam container -->
+        <canvas
+          id="gameCanvas"
+          class="w-full h-full object-contain block"
+        ></canvas>
 
         <!-- Overlay UI (Start / Game Over) -->
         <div
           id="overlay"
-          class="absolute inset-0 bg-slate-900/80 backdrop-blur-sm flex flex-col items-center justify-center p-4 transition-all duration-300"
+          class="absolute inset-0 bg-slate-900/85 backdrop-blur-md flex flex-col items-center justify-center p-6 transition-all duration-300 z-10"
         >
           <div
             id="overlayContent"
-            class="text-center flex flex-col items-center gap-4"
+            class="text-center flex flex-col items-center gap-5 pop-in"
           >
             <div
               id="gameTitle"
-              class="text-2xl sm:text-4xl font-bold text-amber-400 drop-shadow-[0_4px_0_rgba(0,0,0,0.8)] tracking-wider"
+              class="text-3xl sm:text-5xl font-bold text-amber-400 drop-shadow-[0_5px_0_rgba(0,0,0,0.9)] tracking-widest leading-tight"
             >
-              CHICKEN BALAP!
+              CHICKEN<br />BALAP!
             </div>
             <p
               id="gameSubText"
-              class="text-xs sm:text-sm text-slate-300 max-w-md leading-relaxed"
+              class="text-xs sm:text-sm text-slate-200 max-w-[250px] leading-relaxed"
             >
-              Bantu Si Ayam agar tidak masuk wajan penggorengan !
+              Bantu Si Ayam agar tidak masuk wajan penggorengan!
             </p>
 
             <button
               id="startBtn"
-              class="mt-2 px-6 py-3 bg-amber-500 hover:bg-amber-400 active:translate-y-1 text-slate-950 font-bold text-sm sm:text-base rounded-lg border-b-4 border-amber-700 transition-all cursor-pointer shadow-lg flex items-center gap-2"
+              class="mt-4 px-8 py-4 bg-amber-500 hover:bg-amber-400 active:translate-y-1 text-slate-950 font-bold text-base sm:text-lg rounded-xl border-b-[5px] border-amber-700 transition-all cursor-pointer shadow-xl flex items-center gap-2"
             >
-              <span>Gasken</span>
+              <span>GASKEN 🔥</span>
             </button>
 
             <div
-              class="text-[10px] sm:text-xs text-slate-400 mt-2 flex flex-wrap justify-center gap-3"
+              class="text-[9px] sm:text-xs text-slate-400 mt-4 flex flex-col gap-2"
             >
               <span
-                class="bg-slate-800 px-2 py-1 rounded border border-slate-700"
-                >Space / Panah Atas = Lompat</span
+                class="bg-slate-800 px-3 py-2 rounded-md border border-slate-700"
+                >Kiri Layar = NUNDUK</span
               >
               <span
-                class="bg-slate-800 px-2 py-1 rounded border border-slate-700"
-                >Panah Bawah = Menunduk</span
-              >
-              <span
-                class="bg-slate-800 px-2 py-1 rounded border border-slate-700 sm:hidden"
-                >Tap Layar = Lompat</span
+                class="bg-slate-800 px-3 py-2 rounded-md border border-slate-700"
+                >Kanan Layar = LOMPAT</span
               >
             </div>
           </div>
@@ -115,37 +126,39 @@
 
         <!-- Live Score Badge in Canvas -->
         <div
-          class="absolute top-3 right-4 bg-slate-900/60 backdrop-blur-md px-3 py-1.5 rounded-lg border border-slate-700 text-xs sm:text-sm font-mono text-emerald-400 font-bold tracking-widest shadow"
+          class="absolute top-4 right-4 bg-slate-900/70 backdrop-blur-md px-4 py-2 rounded-xl border-2 border-slate-700 text-sm sm:text-base font-mono text-emerald-400 font-bold tracking-widest shadow-lg z-0"
         >
-          SCORE: <span id="scoreText">00000</span>
+          <span id="scoreText">00000</span>
         </div>
       </div>
 
-      <!-- Touch Control Helper -->
-      <div class="w-full grid grid-cols-2 gap-3 mt-3 sm:hidden">
+      <!-- Touch Control Helper (Mobile Ergonomics) -->
+      <div class="w-full flex gap-3 shrink-0 pb-2 px-1 touch-controls">
         <button
           id="mobileDuckBtn"
-          class="py-3 bg-slate-800 border border-slate-700 rounded-lg text-xs font-bold text-slate-300 active:bg-slate-700 flex items-center justify-center gap-1"
+          class="flex-1 py-5 bg-slate-800 border-b-4 border-slate-700 rounded-2xl text-sm font-bold text-slate-300 active:bg-slate-700 active:translate-y-1 transition-transform flex flex-col items-center justify-center gap-1 shadow-lg"
         >
-          👇 MENUNDUK
+          <span class="text-2xl">🔽</span>
+          <span>NUNDUK</span>
         </button>
         <button
           id="mobileJumpBtn"
-          class="py-3 bg-amber-600 border border-amber-500 rounded-lg text-xs font-bold text-white active:bg-amber-500 flex items-center justify-center gap-1"
+          class="flex-1 py-5 bg-amber-600 border-b-4 border-amber-700 rounded-2xl text-sm font-bold text-white active:bg-amber-500 active:translate-y-1 transition-transform flex flex-col items-center justify-center gap-1 shadow-lg"
         >
-          🚀 LOMPAT
+          <span class="text-2xl">🔼</span>
+          <span>LOMPAT</span>
         </button>
       </div>
       <!-- Footer -->
       <div
-        class="w-full mt-8 mb-2 text-center text-[10px] sm:text-xs text-slate-500 font-sans tracking-wide"
+        class="w-full text-center text-[9px] sm:text-xs text-slate-500 shrink-0 pb-1"
       >
         &copy; 2026 Luqman ID. Semua hak dilindungi undang-undang
       </div>
     </div>
 
     <script>
-      // Audio Synthesizer via Web Audio API (No external sound files required)
+      // Audio Synthesizer (Tidak butuh file eksternal)
       class SoundFX {
         constructor() {
           this.ctx = null;
@@ -163,17 +176,14 @@
           const gain = this.ctx.createGain();
           osc.connect(gain);
           gain.connect(this.ctx.destination);
-
           osc.type = "sine";
           osc.frequency.setValueAtTime(150, this.ctx.currentTime);
           osc.frequency.exponentialRampToValueAtTime(
             400,
             this.ctx.currentTime + 0.15,
           );
-
           gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
           gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.15);
-
           osc.start();
           osc.stop(this.ctx.currentTime + 0.15);
         }
@@ -184,14 +194,11 @@
           const gain = this.ctx.createGain();
           osc.connect(gain);
           gain.connect(this.ctx.destination);
-
           osc.type = "square";
           osc.frequency.setValueAtTime(600, this.ctx.currentTime);
           osc.frequency.setValueAtTime(800, this.ctx.currentTime + 0.08);
-
           gain.gain.setValueAtTime(0.1, this.ctx.currentTime);
           gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.16);
-
           osc.start();
           osc.stop(this.ctx.currentTime + 0.16);
         }
@@ -202,17 +209,14 @@
           const gain = this.ctx.createGain();
           osc.connect(gain);
           gain.connect(this.ctx.destination);
-
           osc.type = "sawtooth";
           osc.frequency.setValueAtTime(120, this.ctx.currentTime);
           osc.frequency.exponentialRampToValueAtTime(
             30,
             this.ctx.currentTime + 0.3,
           );
-
           gain.gain.setValueAtTime(0.4, this.ctx.currentTime);
           gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.3);
-
           osc.start();
           osc.stop(this.ctx.currentTime + 0.3);
         }
@@ -220,7 +224,7 @@
 
       const sound = new SoundFX();
 
-      // Canvas Setup
+      // Canvas Setup - Internal Resolution diperbesar
       const canvas = document.getElementById("gameCanvas");
       const ctx = canvas.getContext("2d");
 
@@ -234,9 +238,9 @@
       const mobileJumpBtn = document.getElementById("mobileJumpBtn");
       const mobileDuckBtn = document.getElementById("mobileDuckBtn");
 
-      // Canvas Resolution Dynamic Resizing
+      // Resolusi Kanvas yang lebih proporsional & tinggi (4:3 ratio) untuk kenyamanan Mobile
       const CANVAS_WIDTH = 800;
-      const CANVAS_HEIGHT = 400;
+      const CANVAS_HEIGHT = 600;
       canvas.width = CANVAS_WIDTH;
       canvas.height = CANVAS_HEIGHT;
 
@@ -246,34 +250,39 @@
       let highScore = parseInt(
         localStorage.getItem("chicken_runner_hi") || "0",
       );
-      let gameSpeed = 6;
+      let gameSpeed = 8; // Sedikit lebih cepat karena area pandang lebih besar
       let frameCount = 0;
       let animationFrameId = null;
 
-      // HighScore UI Initialization
       highScoreText.textContent = String(highScore).padStart(5, "0");
 
-      // Ground position
-      const GROUND_Y = 320;
+      // Ground position diturunkan karena tinggi kanvas bertambah
+      const GROUND_Y = 480;
 
-      // Chicken Player Object
+      // Faktor Skala Global (Membesarkan ukuran semua entitas)
+      const SCALE = 1.5;
+
+      // Chicken Player Object - Ukuran Fisika sudah dikalikan 1.5x lipat
       const chicken = {
         x: 80,
-        y: GROUND_Y - 45,
-        width: 42,
-        height: 45,
-        normalHeight: 45,
-        duckHeight: 25,
+        // Ukuran asli 42 x 45 -> Menjadi 63 x 67.5
+        width: 42 * SCALE,
+        height: 45 * SCALE,
+        normalHeight: 45 * SCALE,
+        duckHeight: 25 * SCALE,
         vy: 0,
-        gravity: 0.7,
-        jumpForce: -13.5,
+
+        // Gravitasi & Jump Force disesuaikan agar feel lompatan tetap sama
+        gravity: 0.7 * SCALE,
+        jumpForce: -13.5 * SCALE,
+
         isGrounded: true,
         isDucking: false,
         wingAnimFrame: 0,
 
         reset() {
-          this.y = GROUND_Y - this.normalHeight;
           this.height = this.normalHeight;
+          this.y = GROUND_Y - this.normalHeight;
           this.vy = 0;
           this.isGrounded = true;
           this.isDucking = false;
@@ -301,11 +310,9 @@
         },
 
         update() {
-          // Physics
           this.vy += this.gravity;
           this.y += this.vy;
 
-          // Ground Collision
           const currentGroundY = GROUND_Y - this.height;
           if (this.y >= currentGroundY) {
             this.y = currentGroundY;
@@ -313,7 +320,6 @@
             this.isGrounded = true;
           }
 
-          // Wing Animation Counter
           if (frameCount % 6 === 0) {
             this.wingAnimFrame = (this.wingAnimFrame + 1) % 4;
           }
@@ -321,21 +327,20 @@
 
         draw(ctx) {
           ctx.save();
+          // Translate ke posisi aktual ayam, kemudian perbesar skala gambarnya
           ctx.translate(this.x, this.y);
+          ctx.scale(SCALE, SCALE);
 
           if (this.isDucking) {
-            // --- DUCKING CHICKEN SPRITE ---
-            // Body
-            ctx.fillStyle = "#facc15"; // Yellow
+            // -- Ducking Sprite --
+            ctx.fillStyle = "#facc15";
             ctx.beginPath();
             ctx.ellipse(22, 14, 22, 11, 0, 0, Math.PI * 2);
             ctx.fill();
 
-            // Comb (Jengger)
             ctx.fillStyle = "#ef4444";
             ctx.fillRect(36, 2, 6, 6);
 
-            // Beak (Paruh)
             ctx.fillStyle = "#f97316";
             ctx.beginPath();
             ctx.moveTo(40, 10);
@@ -343,19 +348,16 @@
             ctx.lineTo(40, 17);
             ctx.fill();
 
-            // Eye
             ctx.fillStyle = "#000";
             ctx.beginPath();
             ctx.arc(35, 9, 2.5, 0, Math.PI * 2);
             ctx.fill();
 
-            // Wing
             ctx.fillStyle = "#eab308";
             ctx.beginPath();
             ctx.ellipse(16, 14, 10, 5, -0.2, 0, Math.PI * 2);
             ctx.fill();
 
-            // Feet
             ctx.strokeStyle = "#f97316";
             ctx.lineWidth = 3;
             ctx.beginPath();
@@ -365,8 +367,7 @@
             ctx.lineTo(21, 25);
             ctx.stroke();
           } else {
-            // --- STANDING / JUMPING CHICKEN SPRITE ---
-            // Feet (Running animation)
+            // -- Standing / Jumping Sprite --
             ctx.strokeStyle = "#f97316";
             ctx.lineWidth = 3.5;
             const legOffset = this.isGrounded
@@ -382,7 +383,6 @@
             ctx.lineTo(34 + legOffset, 45);
             ctx.stroke();
 
-            // Tail Feathers
             ctx.fillStyle = "#eab308";
             ctx.beginPath();
             ctx.moveTo(2, 20);
@@ -393,18 +393,15 @@
             ctx.lineTo(4, 28);
             ctx.fill();
 
-            // Body
-            ctx.fillStyle = "#facc15"; // Yellow
+            ctx.fillStyle = "#facc15";
             ctx.beginPath();
             ctx.ellipse(20, 24, 16, 15, 0, 0, Math.PI * 2);
             ctx.fill();
 
-            // Head
             ctx.beginPath();
             ctx.arc(28, 13, 11, 0, Math.PI * 2);
             ctx.fill();
 
-            // Comb (Jengger Ayam)
             ctx.fillStyle = "#ef4444";
             ctx.beginPath();
             ctx.arc(25, 2, 4, 0, Math.PI * 2);
@@ -412,12 +409,10 @@
             ctx.arc(33, 2, 4, 0, Math.PI * 2);
             ctx.fill();
 
-            // Wattle (Gelambir Merah)
             ctx.beginPath();
             ctx.arc(36, 20, 3.5, 0, Math.PI * 2);
             ctx.fill();
 
-            // Beak (Paruh)
             ctx.fillStyle = "#f97316";
             ctx.beginPath();
             ctx.moveTo(36, 12);
@@ -425,18 +420,16 @@
             ctx.lineTo(36, 19);
             ctx.fill();
 
-            // Eye
             ctx.fillStyle = "#000000";
             ctx.beginPath();
             ctx.arc(31, 10, 2.5, 0, Math.PI * 2);
             ctx.fill();
-            // Eye Glint
+
             ctx.fillStyle = "#ffffff";
             ctx.beginPath();
             ctx.arc(32, 9, 1, 0, Math.PI * 2);
             ctx.fill();
 
-            // Wing (Flapping Animation)
             ctx.fillStyle = "#eab308";
             ctx.save();
             ctx.translate(16, 22);
@@ -454,28 +447,30 @@
         },
       };
 
-      // Obstacles System
       let obstacles = [];
 
       class Obstacle {
         constructor(type) {
-          this.type = type; // 'cactus', 'egg', 'bird'
-          this.x = CANVAS_WIDTH + 50;
+          this.type = type;
+          this.x = CANVAS_WIDTH + 100;
 
+          // Ukuran rintangan juga diperbesar 1.5x lipat
           if (type === "cactus") {
-            this.width = 28;
-            this.height = 50;
+            this.width = 28 * SCALE;
+            this.height = 50 * SCALE;
             this.y = GROUND_Y - this.height;
           } else if (type === "egg") {
-            this.width = 30;
-            this.height = 36;
+            this.width = 30 * SCALE;
+            this.height = 36 * SCALE;
             this.y = GROUND_Y - this.height;
           } else if (type === "bird") {
-            this.width = 44;
-            this.height = 32;
-            // Flying bird height (Low requires ducking, High requires stay ground or jump)
-            this.y = Math.random() > 0.5 ? GROUND_Y - 75 : GROUND_Y - 42;
-            this.animFrame = 0;
+            this.width = 44 * SCALE;
+            this.height = 32 * SCALE;
+            // Spawn height disesuaikan dengan tinggi ayam yang baru
+            this.y =
+              Math.random() > 0.5
+                ? GROUND_Y - 75 * SCALE
+                : GROUND_Y - 42 * SCALE;
           }
         }
 
@@ -486,35 +481,26 @@
         draw(ctx) {
           ctx.save();
           ctx.translate(this.x, this.y);
+          ctx.scale(SCALE, SCALE); // Vektor digambar 1.5x lebih besar
 
           if (this.type === "cactus") {
-            // Triple/Single Cactus
             ctx.fillStyle = "#15803d";
-            // Main Stem
             ctx.fillRect(10, 0, 10, 50);
-            // Left Branch
             ctx.fillRect(2, 15, 10, 6);
             ctx.fillRect(2, 10, 5, 10);
-            // Right Branch
             ctx.fillRect(18, 22, 8, 6);
             ctx.fillRect(21, 14, 5, 12);
-            // Details
             ctx.fillStyle = "#166534";
             ctx.fillRect(12, 0, 3, 50);
           } else if (this.type === "egg") {
-            // Hay Stack / Nest with Egg
             ctx.fillStyle = "#d97706";
             ctx.beginPath();
             ctx.ellipse(15, 28, 18, 8, 0, 0, Math.PI * 2);
             ctx.fill();
-
-            // Spotted Egg
             ctx.fillStyle = "#f8fafc";
             ctx.beginPath();
             ctx.ellipse(15, 18, 11, 15, 0, 0, Math.PI * 2);
             ctx.fill();
-
-            // Spots
             ctx.fillStyle = "#cbd5e1";
             ctx.beginPath();
             ctx.arc(11, 14, 2.5, 0, Math.PI * 2);
@@ -522,16 +508,11 @@
             ctx.arc(13, 25, 2, 0, Math.PI * 2);
             ctx.fill();
           } else if (this.type === "bird") {
-            // Pterodactyl / Eagle Bird
             const flap = Math.sin(frameCount * 0.3) > 0;
-
-            // Bird Body
             ctx.fillStyle = "#475569";
             ctx.beginPath();
             ctx.ellipse(20, 16, 16, 8, 0, 0, Math.PI * 2);
             ctx.fill();
-
-            // Head & Beak
             ctx.fillRect(32, 10, 8, 7);
             ctx.fillStyle = "#ef4444";
             ctx.beginPath();
@@ -539,8 +520,6 @@
             ctx.lineTo(48, 14);
             ctx.lineTo(40, 17);
             ctx.fill();
-
-            // Wings
             ctx.fillStyle = "#334155";
             ctx.beginPath();
             if (flap) {
@@ -559,89 +538,72 @@
         }
       }
 
-      // Clouds Background System
+      // Clouds
       let clouds = [];
       function manageClouds() {
-        if (frameCount % 120 === 0 && Math.random() > 0.3) {
+        if (frameCount % 90 === 0 && Math.random() > 0.3) {
           clouds.push({
             x: CANVAS_WIDTH + 60,
-            y: Math.random() * 120 + 20,
+            y: Math.random() * 200 + 40,
             speed: Math.random() * 0.8 + 0.5,
-            scale: Math.random() * 0.5 + 0.7,
+            scale: Math.random() * 0.7 + 0.8, // Awan dibuat lebih besar
           });
         }
-
         clouds.forEach((cloud, index) => {
           cloud.x -= cloud.speed;
-
-          // Draw Cloud
           ctx.fillStyle = "rgba(255, 255, 255, 0.85)";
           ctx.beginPath();
-          ctx.arc(cloud.x, cloud.y, 18 * cloud.scale, 0, Math.PI * 2);
+          // Skala awan ikut diperbesar agar imbang dengan karakter
+          const cScale = cloud.scale * SCALE;
+          ctx.arc(cloud.x, cloud.y, 18 * cScale, 0, Math.PI * 2);
           ctx.arc(
-            cloud.x + 15 * cloud.scale,
-            cloud.y - 10 * cloud.scale,
-            22 * cloud.scale,
+            cloud.x + 15 * cScale,
+            cloud.y - 10 * cScale,
+            22 * cScale,
             0,
             Math.PI * 2,
           );
-          ctx.arc(
-            cloud.x + 35 * cloud.scale,
-            cloud.y,
-            18 * cloud.scale,
-            0,
-            Math.PI * 2,
-          );
+          ctx.arc(cloud.x + 35 * cScale, cloud.y, 18 * cScale, 0, Math.PI * 2);
           ctx.fill();
-
-          if (cloud.x < -100) clouds.splice(index, 1);
+          if (cloud.x < -150) clouds.splice(index, 1);
         });
       }
 
-      // Spawn Obstacle Logic
       let obstacleTimer = 0;
       let minObstacleInterval = 80;
 
       function manageObstacles() {
         obstacleTimer++;
-
         if (obstacleTimer > minObstacleInterval) {
           if (Math.random() < 0.6) {
             const types = ["cactus", "egg", "bird"];
-            // Only spawn bird if score > 150
             const availableTypes = score > 150 ? types : ["cactus", "egg"];
             const selectedType =
               availableTypes[Math.floor(Math.random() * availableTypes.length)];
-
             obstacles.push(new Obstacle(selectedType));
             obstacleTimer = 0;
-            // Randomize next interval
             minObstacleInterval =
               Math.floor(Math.random() * 40) +
               Math.max(45, 90 - Math.floor(score / 100));
           }
         }
-
         for (let i = obstacles.length - 1; i >= 0; i--) {
           const obs = obstacles[i];
           obs.update();
           obs.draw(ctx);
 
-          // AABB Collision Detection
           if (checkCollision(chicken, obs)) {
             handleGameOver();
           }
-
-          // Remove Offscreen & Increase Score
-          if (obs.x + obs.width < 0) {
+          if (obs.x + obs.width < -50) {
             obstacles.splice(i, 1);
           }
         }
       }
 
-      // Collision Helper (With slight padding forgiveness for fair gameplay)
+      // Hitbox disesuaikan secara proporsional dengan skala baru
       function checkCollision(rect1, rect2) {
-        const padding = 6;
+        const padding = 9; // Padding asli (6) * SCALE (1.5)
         return (
           rect1.x + padding < rect2.x + rect2.width &&
           rect1.x + rect1.width - padding > rect2.x &&
@@ -650,8 +612,6 @@
         );
       }
 
-      // Helper function untuk transisi warna (Linear Interpolation)
-      // Fungsi ini mengubah dua warna hex menjadi angka RGB, lalu mencari warna tengahnya berdasarkan faktor progress
       function lerpColor(color1, color2, factor) {
         let c1 = parseInt(color1.substring(1), 16);
         let c2 = parseInt(color2.substring(1), 16);
@@ -669,25 +629,17 @@
         );
       }
 
-      // Environment Scenery (Ground, Sun/Moon, Grass)
       let groundOffset = 0;
       function drawEnvironment() {
-        // Kalkulasi Waktu & Fase (Asumsi 60 FPS)
-        // 20 detik = 1200 frame. Total 4 fase = 4800 frame per siklus penuh
         const framesPerPhase = 1200;
         const totalPhases = 4;
         const totalCycleFrames = framesPerPhase * totalPhases;
-
         const currentCycleFrame = frameCount % totalCycleFrames;
         const currentPhase = Math.floor(currentCycleFrame / framesPerPhase);
-
-        // Progress dari 0.0 hingga 1.0 di dalam fase yang sedang berjalan
         const progress = (currentCycleFrame % framesPerPhase) / framesPerPhase;
 
-        // Palet warna diperbarui: menambahkan warna tanah, rumput, dan detail rumput
         const phases = [
           {
-            // 0: Pagi
             top: "#bae6fd",
             bottom: "#f0f9ff",
             celestial1: "#fde047",
@@ -697,7 +649,6 @@
             detail: "#16a34a",
           },
           {
-            // 1: Siang
             top: "#38bdf8",
             bottom: "#bae6fd",
             celestial1: "#fef08a",
@@ -707,7 +658,6 @@
             detail: "#16a34a",
           },
           {
-            // 2: Sore
             top: "#f97316",
             bottom: "#fde047",
             celestial1: "#ea580c",
@@ -717,7 +667,6 @@
             detail: "#15803d",
           },
           {
-            // 3: Malam
             top: "#0f172a",
             bottom: "#1e293b",
             celestial1: "#e2e8f0",
@@ -728,11 +677,9 @@
           },
         ];
 
-        // Tentukan warna fase sekarang dan fase berikutnya untuk ditransisikan
         const current = phases[currentPhase];
         const next = phases[(currentPhase + 1) % totalPhases];
 
-        // Transisi warna dengan lerpColor untuk langit dan tanah
         const currentTopColor = lerpColor(current.top, next.top, progress);
         const currentBottomColor = lerpColor(
           current.bottom,
@@ -749,85 +696,68 @@
           next.celestial2,
           progress,
         );
-
         const currentDirt = lerpColor(current.dirt, next.dirt, progress);
         const currentGrass = lerpColor(current.grass, next.grass, progress);
         const currentDetail = lerpColor(current.detail, next.detail, progress);
 
-        // --- 1. Menggambar Langit (Sky Gradient) ---
+        // Sky
         const skyGradient = ctx.createLinearGradient(0, 0, 0, GROUND_Y);
         skyGradient.addColorStop(0, currentTopColor);
         skyGradient.addColorStop(1, currentBottomColor);
         ctx.fillStyle = skyGradient;
         ctx.fillRect(0, 0, CANVAS_WIDTH, GROUND_Y);
 
-        // --- 2. Menggambar Benda Langit (Matahari / Bulan) ---
-        // Animasi posisi Y agar terbit dan tenggelam secara smooth
-        let celestialY = 60;
-        if (currentPhase === 0) {
-          celestialY = 60 + (1 - progress) * 80; // Pagi: Matahari Terbit (Y: 140 -> 60)
-        } else if (currentPhase === 1) {
-          celestialY = 60; // Siang: Matahari di atas (Y: 60)
-        } else if (currentPhase === 2) {
-          celestialY = 60 + progress * 80; // Sore: Matahari Tenggelam (Y: 60 -> 140)
-        } else if (currentPhase === 3) {
-          // Malam: Bulan terbit di paruh pertama, tenggelam di paruh kedua agar posisinya menyambung dengan Pagi
-          if (progress < 0.5) {
-            celestialY = 60 + (1 - progress * 2) * 80; // Y: 140 -> 60
-          } else {
-            celestialY = 60 + (progress - 0.5) * 2 * 80; // Y: 60 -> 140
-          }
+        // Celestial Body (Sun/Moon)
+        let celestialY = 120;
+        if (currentPhase === 0) celestialY = 120 + (1 - progress) * 120;
+        else if (currentPhase === 1) celestialY = 120;
+        else if (currentPhase === 2) celestialY = 120 + progress * 120;
+        else if (currentPhase === 3) {
+          if (progress < 0.5) celestialY = 120 + (1 - progress * 2) * 120;
+          else celestialY = 120 + (progress - 0.5) * 2 * 120;
         }
 
         ctx.fillStyle = currentCelestial1;
         ctx.beginPath();
-        ctx.arc(700, celestialY, 30, 0, Math.PI * 2);
+        ctx.arc(700, celestialY, 40, 0, Math.PI * 2);
         ctx.fill();
         ctx.fillStyle = currentCelestial2;
         ctx.beginPath();
-        ctx.arc(700, celestialY, 38, 0, Math.PI * 2);
+        ctx.arc(700, celestialY, 50, 0, Math.PI * 2);
         ctx.fill();
 
-        // --- 3. Menggambar Tanah (Ground & Grass) ---
+        // Ground & Grass
         ctx.fillStyle = currentDirt;
         ctx.fillRect(0, GROUND_Y, CANVAS_WIDTH, CANVAS_HEIGHT - GROUND_Y);
-
         ctx.fillStyle = currentGrass;
-        ctx.fillRect(0, GROUND_Y, CANVAS_WIDTH, 10);
+        ctx.fillRect(0, GROUND_Y, CANVAS_WIDTH, 15);
 
-        // Animasi pergerakan detail tanah
-        groundOffset = (groundOffset + gameSpeed) % 40;
+        // Ground Detail Animation
+        groundOffset = (groundOffset + gameSpeed) % 60;
         ctx.fillStyle = currentDetail;
-        for (let x = -groundOffset; x < CANVAS_WIDTH; x += 40) {
-          ctx.fillRect(x, GROUND_Y - 4, 12, 4);
-          ctx.fillRect(x + 20, GROUND_Y + 12, 6, 3);
+        for (let x = -groundOffset; x < CANVAS_WIDTH; x += 60) {
+          ctx.fillRect(x, GROUND_Y - 6, 18, 6);
+          ctx.fillRect(x + 30, GROUND_Y + 18, 9, 4.5);
         }
       }
 
-      // Main Game Loop
       function gameLoop() {
         if (!gameRunning) return;
-
         frameCount++;
         ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-        // Render World
         drawEnvironment();
         manageClouds();
 
-        // Update & Render Chicken
         chicken.update();
         chicken.draw(ctx);
 
-        // Update & Render Obstacles
         manageObstacles();
 
-        // Update Score & Speed
         score += 0.15;
         const currentScoreInt = Math.floor(score);
         scoreText.textContent = String(currentScoreInt).padStart(5, "0");
 
-        // Milestone Sound Every 100 Score
         if (
           currentScoreInt > 0 &&
           currentScoreInt % 100 === 0 &&
@@ -836,20 +766,18 @@
           sound.playScore();
         }
 
-        // Gradual Speed Increase
-        if (frameCount % 300 === 0 && gameSpeed < 14) {
-          gameSpeed += 0.4;
+        if (frameCount % 300 === 0 && gameSpeed < 16) {
+          gameSpeed += 0.5;
         }
 
         animationFrameId = requestAnimationFrame(gameLoop);
       }
 
-      // Start / Restart Game
       function startGame() {
         sound.init();
         gameRunning = true;
         score = 0;
-        gameSpeed = 6;
+        gameSpeed = 8;
         frameCount = 0;
         obstacleTimer = 0;
         obstacles = [];
@@ -857,15 +785,14 @@
         chicken.reset();
 
         overlay.classList.add("hidden");
+        overlayContent.classList.remove("pop-in"); // Reset animasi overlay
         if (animationFrameId) cancelAnimationFrame(animationFrameId);
         gameLoop();
       }
 
-      // Game Over Handler
       function handleGameOver() {
         gameRunning = false;
         sound.playHit();
-
         const finalScore = Math.floor(score);
         if (finalScore > highScore) {
           highScore = finalScore;
@@ -873,24 +800,24 @@
           highScoreText.textContent = String(highScore).padStart(5, "0");
         }
 
-        // Show Game Over Overlay
-        gameTitle.textContent = "MATI YA?";
+        gameTitle.innerHTML = "WADUH<br/>MATI!";
         gameTitle.className =
-          "text-2xl sm:text-4xl font-bold text-red-500 drop-shadow-[0_4px_0_rgba(0,0,0,0.8)] tracking-wider";
-        gameSubText.innerHTML = `Skor Kamu: <span class="text-amber-300 font-bold">${finalScore}</span>`;
-        startBtn.innerHTML = `<span>Gas Lagi</span>`;
+          "text-4xl sm:text-5xl font-bold text-red-500 drop-shadow-[0_5px_0_rgba(0,0,0,0.9)] tracking-widest leading-tight";
+        gameSubText.innerHTML = `Skor Terakhir: <br/><span class="text-amber-300 font-bold text-xl">${finalScore}</span>`;
+        startBtn.innerHTML = `<span>MAIN LAGI 🔄</span>`;
+
         overlay.classList.remove("hidden");
+        // Trigger reflow & re-add animation
+        void overlayContent.offsetWidth;
+        overlayContent.classList.add("pop-in");
       }
 
-      // Event Listeners for Controls
+      // Input Handlers
       function handleKeyDown(e) {
         if (e.code === "Space" || e.code === "ArrowUp") {
           e.preventDefault();
-          if (!gameRunning) {
-            startGame();
-          } else {
-            chicken.jump();
-          }
+          if (!gameRunning) startGame();
+          else chicken.jump();
         } else if (e.code === "ArrowDown") {
           e.preventDefault();
           if (gameRunning) chicken.duck(true);
@@ -903,13 +830,20 @@
         }
       }
 
-      // Touch Controls
+      // Responsive Screen Tap (Left side to Duck, Right side to Jump)
       canvas.addEventListener(
         "touchstart",
         (e) => {
           e.preventDefault();
           if (!gameRunning) {
             startGame();
+            return;
+          }
+
+          const touch = e.touches[0];
+          const screenWidth = window.innerWidth;
+          if (touch.clientX < screenWidth / 2) {
+            chicken.duck(true);
           } else {
             chicken.jump();
           }
@@ -917,9 +851,16 @@
         { passive: false },
       );
 
+      canvas.addEventListener("touchend", (e) => {
+        e.preventDefault();
+        if (gameRunning) chicken.duck(false);
+      });
+
+      // Dedicated Mobile Buttons
       mobileJumpBtn.addEventListener("touchstart", (e) => {
         e.preventDefault();
-        if (gameRunning) chicken.jump();
+        if (!gameRunning) startGame();
+        else chicken.jump();
       });
 
       mobileDuckBtn.addEventListener("touchstart", (e) => {
@@ -932,16 +873,12 @@
         if (gameRunning) chicken.duck(false);
       });
 
-      // Keyboard Listeners
       window.addEventListener("keydown", handleKeyDown);
       window.addEventListener("keyup", handleKeyUp);
       startBtn.addEventListener("click", startGame);
 
-      // Initial Static Render
       drawEnvironment();
       chicken.draw(ctx);
-
-      // Tambahin local storage
     </script>
   </body>
 </html>
